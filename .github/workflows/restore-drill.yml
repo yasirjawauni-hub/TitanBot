@@ -2,7 +2,7 @@ name: Restore Drill
 
 on:
   schedule:
-    - cron: '0 4 * * 1'
+    - cron: '0 4 * * 1'   # Every Monday at 4 AM
   workflow_dispatch:
 
 jobs:
@@ -13,24 +13,24 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: titanbot
-          POSTGRES_PASSWORD: titanbot
-          POSTGRES_DB: titanbot
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U titanbot -d titanbot"
+          --health-cmd "pg_isready -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.POSTGRES_DB }}"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
     env:
-      POSTGRES_URL: postgresql://titanbot:titanbot@localhost:5432/titanbot
+      POSTGRES_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/${{ secrets.POSTGRES_DB }}
       POSTGRES_HOST: localhost
       POSTGRES_PORT: 5432
-      POSTGRES_DB: titanbot
-      POSTGRES_USER: titanbot
-      POSTGRES_PASSWORD: titanbot
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       POSTGRES_SSL: "false"
       SCHEMA_VERSION: "1"
       SCHEMA_VERSION_LABEL: "baseline-v1"
@@ -47,7 +47,7 @@ jobs:
           cache: npm
 
       - name: Install PostgreSQL client tools
-        run: sudo apt-get update ; sudo apt-get install -y postgresql-client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
       - name: Install dependencies
         run: npm ci
@@ -55,5 +55,17 @@ jobs:
       - name: Apply migrations
         run: npm run migrate
 
-      - name: Run restore drill
+      - name: Run backup drill
         run: npm run backup:drill
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-backup
+          path: ./backups/latest_backup.dump
+
+      - name: Validate restore
+        run: |
+          createdb -U $POSTGRES_USER restore_test
+          pg_restore -U $POSTGRES_USER -d restore_test ./backups/latest_backup.dump
+          psql -U $POSTGRES_USER -d restore_test -c "SELECT COUNT(*) FROM information_schema.tables;"
