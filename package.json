@@ -1,12 +1,15 @@
 {
   "name": "titanbot-custom",
   "version": "1.1.1",
-  "description": "Modular Ultimate Community Bot by Touchpoint Support",
+  "description": "best all-in-one discord mod by zurai02",
   "main": "src/app.js",
   "type": "module",
   "scripts": {
     "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
     "test": "node --test tests/**/*.test.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
     "migrate": "node scripts/migrate.js apply",
     "migrate:check": "node scripts/migrate.js check",
     "migrate:status": "node scripts/migrate.js status",
@@ -26,8 +29,23 @@
     "winston-daily-rotate-file": "^5.0.0",
     "zod": "^3.25.76"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "eslint": "^9.5.0",
+    "prettier": "^3.2.5",
+    "nodemon": "^3.1.0"
+  },
   "engines": {
     "node": ">=18.0.0"
-  }
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "community",
+    "postgresql",
+    "backup",
+    "restore",
+    "automation"
+  ],
+  "author": "zurai02",
+  "license": "MIT"
 }
